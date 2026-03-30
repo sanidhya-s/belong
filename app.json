@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Belong",
+    "slug": "belong-clone",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#4F3EF5"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.belong.clone"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#4F3EF5"
+      },
+      "package": "com.belong.clone"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
