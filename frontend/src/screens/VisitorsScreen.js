@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, SHADOW, FONTS } from '../theme';
 import { VISITORS } from '../data/mockData';
 import { createVisitor, fetchVisitors, setVisitorStatus } from '../api/visitors';
+import { fetchResidents } from '../api/residents';
 
 const statusConfig = {
   approved: { label: 'Approved', color: COLORS.accentGreen, bg: '#EAFAF1', icon: 'checkmark-circle' },
@@ -57,13 +58,15 @@ const VisitorCard = ({ visitor, onApprove, onDeny }) => {
   );
 };
 
-export default function VisitorsScreen({ navigation }) {
+export default function VisitorsScreen({ navigation, userRole }) {
   const [visitors, setVisitors] = useState(VISITORS);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', purpose: '', vehicle: '' });
+  const [form, setForm] = useState({ name: '', phone: '', purpose: '', vehicle: '', residentId: '' });
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [residents, setResidents] = useState([]);
+  const isGuard = userRole === 'SECURITY_GUARD';
 
   const tabs = ['all', 'pending', 'approved', 'denied'];
 
@@ -77,6 +80,10 @@ export default function VisitorsScreen({ navigation }) {
         if (mounted && data.length > 0) {
           setVisitors(data);
         }
+        if (mounted && isGuard) {
+          const residentData = await fetchResidents();
+          setResidents(residentData);
+        }
       } catch (error) {
         // Keep UX working with fallback mock data when backend is down.
       } finally {
@@ -89,7 +96,7 @@ export default function VisitorsScreen({ navigation }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isGuard]);
 
   const handleApprove = async (id) => {
     setVisitors(prev => prev.map(v => v.id === id ? { ...v, status: 'approved' } : v));
@@ -118,6 +125,10 @@ export default function VisitorsScreen({ navigation }) {
       Alert.alert('Missing Info', 'Please enter visitor name and phone number.');
       return;
     }
+    if (isGuard && !form.residentId) {
+      Alert.alert('Resident Required', 'Please select a resident before sending a request.');
+      return;
+    }
     const optimisticVisitor = {
       id: `local-${Date.now()}`,
       name: form.name,
@@ -131,14 +142,19 @@ export default function VisitorsScreen({ navigation }) {
       avatarColor: COLORS.primary,
     };
     setVisitors(prev => [optimisticVisitor, ...prev]);
-    setForm({ name: '', phone: '', purpose: '', vehicle: '' });
+    setForm({ name: '', phone: '', purpose: '', vehicle: '', residentId: '' });
     setShowAddModal(false);
 
     setIsSyncing(true);
     try {
       const created = await createVisitor(form);
       setVisitors(prev => prev.map(v => v.id === optimisticVisitor.id ? { ...created, phone: form.phone, vehicle: form.vehicle || null } : v));
-      Alert.alert('Visitor Added', 'Your visitor has been notified and is awaiting approval.');
+      Alert.alert(
+        'Visitor Added',
+        isGuard
+          ? 'Request has been sent to the selected resident for approval.'
+          : 'Your visitor has been notified and is awaiting approval.',
+      );
     } catch (error) {
       Alert.alert('Saved Locally', 'Backend was not reachable, but visitor is saved in app state.');
     } finally {
@@ -211,7 +227,28 @@ export default function VisitorsScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Add Visitor</Text>
+            <Text style={styles.modalTitle}>{isGuard ? 'Send Visitor Request' : 'Add Visitor'}</Text>
+            {isGuard && (
+              <View style={{ marginBottom: SPACING.sm }}>
+                <Text style={styles.fieldLabel}>Select Resident *</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.residentRow}>
+                  {residents.map(resident => (
+                    <TouchableOpacity
+                      key={resident.id}
+                      style={[styles.residentChip, form.residentId === resident.id && styles.residentChipActive]}
+                      onPress={() => setForm(prev => ({ ...prev, residentId: resident.id }))}
+                    >
+                      <Text style={[styles.residentChipName, form.residentId === resident.id && styles.residentChipNameActive]}>
+                        {resident.name}
+                      </Text>
+                      <Text style={[styles.residentChipMeta, form.residentId === resident.id && styles.residentChipNameActive]}>
+                        {resident.flat}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             {[
               { placeholder: 'Visitor Name *', key: 'name', icon: 'person-outline' },
@@ -237,7 +274,7 @@ export default function VisitorsScreen({ navigation }) {
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.submitBtn} onPress={handleAddVisitor}>
-                <Text style={styles.submitText}>Add Visitor</Text>
+                <Text style={styles.submitText}>{isGuard ? 'Send Request' : 'Add Visitor'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -328,6 +365,24 @@ const styles = StyleSheet.create({
     borderRadius: 2, alignSelf: 'center', marginBottom: SPACING.lg,
   },
   modalTitle: { fontSize: FONTS.sizes.xl, fontWeight: '700', color: COLORS.textPrimary, marginBottom: SPACING.lg },
+  fieldLabel: { fontSize: FONTS.sizes.sm, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 8 },
+  residentRow: { gap: SPACING.sm, paddingBottom: 4 },
+  residentChip: {
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    minWidth: 120,
+  },
+  residentChipActive: {
+    backgroundColor: '#F0EEFF',
+    borderColor: COLORS.primary,
+  },
+  residentChipName: { color: COLORS.textPrimary, fontWeight: '600' },
+  residentChipMeta: { color: COLORS.textMuted, fontSize: FONTS.sizes.xs, marginTop: 2 },
+  residentChipNameActive: { color: COLORS.primary },
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: COLORS.background, borderRadius: RADIUS.md,

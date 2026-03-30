@@ -8,4 +8,5 @@ public class VisitorRequest {
     @NotBlank private String name;
     private String phone, purpose, vehicleNumber;
     private LocalDateTime expectedArrival;
+    private Long residentId;
 }
