@@ -18,5 +18,5 @@ public class User {
     private boolean active;
     @Column(name = "created_at") private LocalDateTime createdAt;
     @PrePersist void prePersist() { this.createdAt = LocalDateTime.now(); this.active = true; }
-    public enum Role { RESIDENT, ADMIN, SECURITY_GUARD }
+    public enum Role { RESIDENT, MODERATOR, ADMIN, SECURITY_GUARD }
 }

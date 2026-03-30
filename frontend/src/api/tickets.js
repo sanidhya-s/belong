@@ -18,12 +18,12 @@ export function mapTicketFromBackend(item) {
     priority: item.priority || 'medium',
     date: formatDate(item.createdAt),
     description: item.description || '',
-    updates: Array.isArray(item.updates) ? item.updates : ['Ticket raised'],
+    updates: Array.isArray(item.comments) ? item.comments.map(c => `${c.userName}: ${c.content}`) : ['Ticket raised'],
   };
 }
 
 export async function fetchTickets() {
-  const data = await apiRequest('/tickets');
+  const data = await apiRequest('/tickets/my');
   return Array.isArray(data) ? data.map(mapTicketFromBackend) : [];
 }
 
@@ -35,9 +35,7 @@ export async function createTicket(payload) {
       description: payload.description,
       category: payload.category,
       priority: payload.priority,
-      status: 'open',
-      updates: ['Ticket raised'],
-    }),
+          }),
   });
   return mapTicketFromBackend(data);
 }

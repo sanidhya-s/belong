@@ -26,7 +26,7 @@ export function mapVisitorFromBackend(item) {
   const status = STATUS_TO_FE[item.status] || 'pending';
   return {
     id: String(item.id),
-    name: item.visitorName,
+    name: item.name,
     phone: item.phone || '',
     purpose: item.purpose || 'Personal Visit',
     vehicle: item.vehicleNumber || null,
@@ -35,13 +35,13 @@ export function mapVisitorFromBackend(item) {
     time: item.createdAt
       ? new Date(item.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       : new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-    avatar: initials(item.visitorName),
+    avatar: initials(item.name),
     avatarColor: avatarColor(status),
   };
 }
 
 export async function fetchVisitors() {
-  const data = await apiRequest('/visitors');
+  const data = await apiRequest('/visitors/my');
   return Array.isArray(data) ? data.map(mapVisitorFromBackend) : [];
 }
 
@@ -49,12 +49,11 @@ export async function createVisitor(payload) {
   const data = await apiRequest('/visitors', {
     method: 'POST',
     body: JSON.stringify({
-      visitorName: payload.name,
+      name: payload.name,
       purpose: payload.purpose || 'Personal Visit',
       phone: payload.phone || '',
       vehicleNumber: payload.vehicle || '',
-      status: 'PENDING',
-      residentFlatNumber: payload.residentFlatNumber || 'B-304',
+      expectedArrival: new Date().toISOString(),
     }),
   });
   return mapVisitorFromBackend(data);
@@ -62,8 +61,9 @@ export async function createVisitor(payload) {
 
 export async function setVisitorStatus(id, status) {
   const backendStatus = STATUS_TO_BE[status] || 'PENDING';
-  const data = await apiRequest(`/visitors/${id}/status?status=${backendStatus}`, {
+  const data = await apiRequest(`/visitors/${id}/status`, {
     method: 'PATCH',
+    body: JSON.stringify({ status: backendStatus }),
   });
   return mapVisitorFromBackend(data);
 }

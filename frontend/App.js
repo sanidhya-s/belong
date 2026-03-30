@@ -5,11 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   TextInput, KeyboardAvoidingView, Platform,
-  SafeAreaView, Animated, Dimensions,
+  SafeAreaView, Animated, Dimensions, Alert, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, RADIUS, SHADOW } from './src/theme';
+import { COLORS, FONTS, SPACING, RADIUS } from './src/theme';
 import AppNavigator from './src/navigation/AppNavigator';
+import { sendOtp, verifyOtp } from './src/api/auth';
+import { setAuthToken } from './src/api/client';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,15 +45,33 @@ function LoginScreen({ onLogin }) {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('phone');
+  const [loading, setLoading] = useState(false);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (phone.length < 10) return;
-    setStep('otp');
+    setLoading(true);
+    try {
+      await sendOtp(phone);
+      setStep('otp');
+      Alert.alert('OTP Sent', 'Please enter the OTP received on your phone.');
+    } catch (error) {
+      Alert.alert('Unable to send OTP', 'Please check backend URL and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.length < 4) return;
-    onLogin();
+    setLoading(true);
+    try {
+      const auth = await verifyOtp(phone, otp);
+      onLogin(auth);
+    } catch (error) {
+      Alert.alert('Verification failed', 'Invalid/expired OTP. Check server logs and retry.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -115,15 +135,14 @@ function LoginScreen({ onLogin }) {
             style={[login.btn, (step === 'phone' ? phone.length < 10 : otp.length < 4) && login.btnDisabled]}
             onPress={step === 'phone' ? handleSendOtp : handleVerify}
             activeOpacity={0.85}
+            disabled={loading}
           >
-            <Text style={login.btnText}>
-              {step === 'phone' ? 'Send OTP' : 'Verify & Login'}
-            </Text>
-            <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
+            {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={login.btnText}>{step === 'phone' ? 'Send OTP' : 'Verify & Login'}</Text>}
+            {!loading && <Ionicons name="arrow-forward" size={18} color={COLORS.white} />}
           </TouchableOpacity>
 
           {step === 'phone' && (
-            <TouchableOpacity onPress={onLogin} style={login.skip}>
+            <TouchableOpacity onPress={() => onLogin({ role: 'RESIDENT' })} style={login.skip}>
               <Text style={login.skipText}>Skip for demo →</Text>
             </TouchableOpacity>
           )}
@@ -139,15 +158,24 @@ function LoginScreen({ onLogin }) {
 
 export default function App() {
   const [appState, setAppState] = useState('splash');
+  const [authUser, setAuthUser] = useState(null);
+
+  const handleLogin = (auth) => {
+    if (auth?.token) {
+      setAuthToken(auth.token);
+    }
+    setAuthUser(auth);
+    setAppState('main');
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       {appState === 'splash' && <SplashScreen onDone={() => setAppState('login')} />}
-      {appState === 'login' && <LoginScreen onLogin={() => setAppState('main')} />}
+      {appState === 'login' && <LoginScreen onLogin={handleLogin} />}
       {appState === 'main' && (
         <NavigationContainer>
-          <AppNavigator />
+          <AppNavigator userRole={authUser?.role} />
         </NavigationContainer>
       )}
     </GestureHandlerRootView>
