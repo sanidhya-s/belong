@@ -19,12 +19,16 @@ import ModeratorMembersScreen from '../screens/ModeratorMembersScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-function HomeStack() {
+function HomeStack({ userRole }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="HomeMain">
+        {(props) => <HomeScreen {...props} userRole={userRole} />}
+      </Stack.Screen>
       <Stack.Screen name="Amenities" component={AmenitiesScreen} />
-      <Stack.Screen name="Visitors" component={VisitorsScreen} />
+      <Stack.Screen name="Visitors">
+        {(props) => <VisitorsScreen {...props} userRole={userRole} />}
+      </Stack.Screen>
       <Stack.Screen name="Security" component={SecurityScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="Payments" component={PaymentsScreen} />
@@ -37,7 +41,13 @@ function HomeStack() {
 
 export default function AppNavigator({ userRole }) {
   const tabs = [
-    { name: 'Home', component: HomeStack, icon: 'home', iconOut: 'home-outline', label: 'Home' },
+    {
+      name: 'Home',
+      component: (props) => <HomeStack {...props} userRole={userRole} />,
+      icon: 'home',
+      iconOut: 'home-outline',
+      label: 'Home',
+    },
     { name: 'Payments', component: PaymentsScreen, icon: 'card', iconOut: 'card-outline', label: 'Pay' },
     { name: 'Community', component: CommunityScreen, icon: 'people', iconOut: 'people-outline', label: 'Community' },
     { name: 'Notices', component: NoticesScreen, icon: 'newspaper', iconOut: 'newspaper-outline', label: 'Notices' },

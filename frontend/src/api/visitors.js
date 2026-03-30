@@ -54,6 +54,7 @@ export async function createVisitor(payload) {
       phone: payload.phone || '',
       vehicleNumber: payload.vehicle || '',
       expectedArrival: new Date().toISOString(),
+      residentId: payload.residentId ? Number(payload.residentId) : undefined,
     }),
   });
   return mapVisitorFromBackend(data);

@@ -2,6 +2,7 @@ package com.belong.controller;
 
 import com.belong.config.CurrentUserResolver;
 import com.belong.dto.request.VisitorRequest;
+import com.belong.dto.response.MemberResponse;
 import com.belong.dto.response.VisitorResponse;
 import com.belong.service.VisitorService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,11 @@ public class VisitorController {
     @GetMapping("/my")
     public ResponseEntity<List<VisitorResponse>> myVisitors(HttpServletRequest http) {
         return ResponseEntity.ok(visitorService.getMyVisitors(resolver.getCurrentUserId(http)));
+    }
+
+    @GetMapping("/residents")
+    public ResponseEntity<List<MemberResponse>> residents(HttpServletRequest http) {
+        return ResponseEntity.ok(visitorService.getResidentsForSecurity(resolver.getCurrentUserId(http)));
     }
 
     @GetMapping("/society/{societyId}")

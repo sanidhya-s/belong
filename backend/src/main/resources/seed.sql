@@ -49,3 +49,25 @@ SELECT '9999999999', 'Society Moderator', 'moderator@belong.app', 'MODERATOR', s
 FROM societies s
 WHERE s.name = 'Sunshine Residency'
 ON CONFLICT (phone) DO NOTHING;
+
+-- Security guard user for guard login flows
+INSERT INTO users (phone, name, email, role, society_id, active, created_at)
+SELECT '8888888888', 'Main Gate Guard', 'guard@belong.app', 'SECURITY_GUARD', s.id, true, NOW()
+FROM societies s
+WHERE s.name = 'Sunshine Residency'
+ON CONFLICT (phone) DO NOTHING;
+
+-- Resident users for guard-to-resident visitor requests
+INSERT INTO users (phone, name, email, role, society_id, unit_id, active, created_at)
+SELECT '7777777777', 'Aarav Resident', 'aarav@belong.app', 'RESIDENT', s.id, u.id, true, NOW()
+FROM societies s
+JOIN units u ON u.society_id = s.id AND u.number = 'A-101'
+WHERE s.name = 'Sunshine Residency'
+ON CONFLICT (phone) DO NOTHING;
+
+INSERT INTO users (phone, name, email, role, society_id, unit_id, active, created_at)
+SELECT '6666666666', 'Meera Resident', 'meera@belong.app', 'RESIDENT', s.id, u.id, true, NOW()
+FROM societies s
+JOIN units u ON u.society_id = s.id AND u.number = 'A-102'
+WHERE s.name = 'Sunshine Residency'
+ON CONFLICT (phone) DO NOTHING;

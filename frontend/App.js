@@ -97,6 +97,11 @@ function LoginScreen({ onLogin }) {
               ? 'We\'ll send you a verification code'
               : `OTP sent to +91 ${phone}`}
           </Text>
+          {step === 'phone' && (
+            <Text style={login.demoHint}>
+              Demo: use 8888888888 (Security Guard) or 7777777777 (Resident). OTP is 1234.
+            </Text>
+          )}
 
           {step === 'phone' ? (
             <View style={login.inputWrap}>
@@ -213,6 +218,12 @@ const login = StyleSheet.create({
   },
   cardTitle: { fontSize: FONTS.sizes.xxl, fontWeight: '700', color: COLORS.textPrimary },
   cardSub: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, marginTop: 6, marginBottom: SPACING.lg },
+  demoHint: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    marginBottom: SPACING.md,
+    lineHeight: 16,
+  },
   inputWrap: {
     flexDirection: 'row', borderWidth: 1.5, borderColor: COLORS.border,
     borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: SPACING.md,

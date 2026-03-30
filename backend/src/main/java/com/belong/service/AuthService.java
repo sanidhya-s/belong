@@ -13,8 +13,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,12 +23,11 @@ public class AuthService {
     private final CacheManager cacheManager;
 
     public void sendOtp(SendOtpRequest req) {
-        // In production, integrate with an SMS provider (Twilio, MSG91, etc.)
-        String otp = String.format("%04d", new Random().nextInt(10000));
+        // Demo-friendly OTP. Replace with SMS provider integration in production.
+        String otp = "1234";
         Cache cache = cacheManager.getCache("otps");
         if (cache != null) cache.put(req.getPhone(), otp);
-        // TODO: Send OTP via SMS gateway
-        log.info("OTP for {} : {}", req.getPhone(), otp); // Remove in production
+        log.info("OTP for {} : {}", req.getPhone(), otp);
     }
 
     public AuthResponse verifyOtp(VerifyOtpRequest req) {
