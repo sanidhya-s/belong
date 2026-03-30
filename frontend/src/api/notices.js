@@ -13,19 +13,18 @@ export function mapNoticeFromBackend(item) {
   return {
     id: String(item.id),
     title: item.title,
-    body: item.body,
-    type: item.type || 'info',
-    read: Boolean(item.read),
+    body: item.content,
+    type: (item.category || 'info').toLowerCase(),
+    read: false,
     date: formatDate(item.createdAt),
   };
 }
 
 export async function fetchNotices() {
-  const data = await apiRequest('/notices');
+  const data = await apiRequest('/societies/1/notices');
   return Array.isArray(data) ? data.map(mapNoticeFromBackend) : [];
 }
 
 export async function markNoticeRead(id) {
-  const data = await apiRequest(`/notices/${id}/read`, { method: 'PATCH' });
-  return mapNoticeFromBackend(data);
+  return null;
 }

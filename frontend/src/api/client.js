@@ -6,10 +6,17 @@ const defaultHost = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || `http://${defaultHost}:8080/api`;
 
+let authToken = null;
+
+export function setAuthToken(token) {
+  authToken = token || null;
+}
+
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...(options.headers || {}),
     },
     ...options,

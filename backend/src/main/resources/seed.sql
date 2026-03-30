@@ -42,3 +42,10 @@ FROM (VALUES
 ) AS sc(name, phone, designation, shift, type),
 societies s WHERE s.name = 'Sunshine Residency'
 ON CONFLICT DO NOTHING;
+
+-- Moderator user for testing OTP + member management
+INSERT INTO users (phone, name, email, role, society_id, active, created_at)
+SELECT '9999999999', 'Society Moderator', 'moderator@belong.app', 'MODERATOR', s.id, true, NOW()
+FROM societies s
+WHERE s.name = 'Sunshine Residency'
+ON CONFLICT (phone) DO NOTHING;
